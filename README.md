@@ -5,7 +5,7 @@ A Rails 8 application that demonstrates dynamic multi-page PDF generation with c
 ## 🚀 Features
 
 - **Dynamic PDF Generation**: Create multi-page PDFs with customer data and item details
-- **Flexible Copy Options**: Generate 1-50 copies with multiple print modes
+- **Flexible Copy Options**: Generate 1-200 copies with multiple print modes
 - **Print Modes**: Single PDF with all copies OR separate PDF files (as ZIP)
 - **Item Detail Pages**: Each item gets its own detailed page with descriptions
 - **Summary Reports**: Optional summary pages with totals and statistics
@@ -64,10 +64,10 @@ A Rails 8 application that demonstrates dynamic multi-page PDF generation with c
    export DB_USERNAME=postgres
    export DB_PASSWORD=password
    export DB_NAME=demo_print_development
-   
+
    # Start PostgreSQL
    docker-compose up -d db
-   
+
    # Build and run the app
    docker build -t demo-print .
    docker run -p 3000:80 demo-print
@@ -102,7 +102,7 @@ demo-print/
    - Price
    - Optional description
 4. **Configure Options**:
-   - Number of copies (1-50)
+   - Number of copies (1-200)
    - Print mode (single PDF or separate PDFs)
    - Include summary page (checkbox)
 5. **Generate PDF**: Click "Generate PDF" or "Generate & Auto-Print"
@@ -142,7 +142,7 @@ Generated PDFs contain:
     - `items[][quantity]`: Item quantities
     - `items[][price]`: Item prices
     - `items[][description]`: Item descriptions
-    - `copies`: Number of copies (1-50)
+    - `copies`: Number of copies (1-200)
     - `print_mode`: Print mode ('single' or 'separate')
     - `include_summary`: Include summary page (0/1)
 
@@ -277,7 +277,7 @@ To extend functionality:
 
 The enhanced printing system supports:
 
-- **Flexible copy counts**: 1-50 copies with input validation
+- **Flexible copy counts**: 1-200 copies with input validation
 - **Multiple output modes**: Single PDF or ZIP of separate PDFs
 - **Performance optimization**: Separate PDF generation for large copy counts
 - **User warnings**: Alerts for large separate PDF generations
