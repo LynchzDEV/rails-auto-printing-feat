@@ -5,17 +5,22 @@ class PrintController < ApplicationController
   def generate_pdf
     @customer_name = params[:customer_name] || "Default Customer"
     @items = parse_items_from_params
-    @copies = params[:copies]&.to_i || 1
+    @copies = [params[:copies]&.to_i || 1, 1].max.clamp(1, 200)
     @include_summary = params[:include_summary] == "1"
+    @print_mode = params[:print_mode] || "single"
 
     respond_to do |format|
       format.pdf do
-        pdf_content = generate_multi_page_pdf
+        if @print_mode == "separate" && @copies > 1
+          generate_separate_pdfs
+        else
+          pdf_content = generate_multi_page_pdf
 
-        send_data pdf_content,
-                  filename: "multi_page_document_#{Date.current.strftime('%Y%m%d')}.pdf",
-                  type: "application/pdf",
-                  disposition: "inline"
+          send_data pdf_content,
+                    filename: "document_#{@copies}_copies_#{Date.current.strftime('%Y%m%d')}.pdf",
+                    type: "application/pdf",
+                    disposition: "inline"
+        end
       end
     end
   end
@@ -67,12 +72,66 @@ class PrintController < ApplicationController
     end.render
   end
 
+  def generate_separate_pdfs
+    require 'zip'
+    require 'tempfile'
+
+    temp_zip = Tempfile.new(['pdfs', '.zip'])
+
+    begin
+      Zip::File.open(temp_zip.path, Zip::File::CREATE) do |zipfile|
+        @copies.times do |copy_number|
+          pdf_content = generate_single_copy_pdf(copy_number + 1)
+          filename = "document_copy_#{copy_number + 1}_#{Date.current.strftime('%Y%m%d')}.pdf"
+          zipfile.get_output_stream(filename) { |f| f.write(pdf_content) }
+        end
+      end
+
+      send_data File.read(temp_zip.path),
+                filename: "documents_#{@copies}_copies_#{Date.current.strftime('%Y%m%d')}.zip",
+                type: "application/zip",
+                disposition: "attachment"
+    ensure
+      temp_zip.close
+      temp_zip.unlink
+    end
+  end
+
+  def generate_single_copy_pdf(copy_number)
+    require 'prawn'
+
+    Prawn::Document.new(page_size: "A4", margin: 40) do |pdf|
+      pdf.font "Helvetica"
+
+      generate_main_page(pdf, copy_number)
+
+      @items.each_with_index do |item, index|
+        pdf.start_new_page
+        generate_item_detail_page(pdf, item, index + 1, copy_number)
+      end
+
+      if @include_summary
+        pdf.start_new_page
+        generate_summary_page(pdf, copy_number)
+      end
+
+      add_page_numbers(pdf)
+
+    end.render
+  end
+
   def generate_main_page(pdf, copy_number)
     pdf.bounding_box([0, pdf.cursor], width: pdf.bounds.width) do
-      pdf.text "DOCUMENT COPY ##{copy_number}",
+      pdf.text "DOCUMENT COPY ##{copy_number} OF #{@copies}",
                size: 20, style: :bold, align: :center, color: "0066CC"
-      pdf.move_down 10
+      pdf.move_down 5
 
+      if @copies > 1
+        pdf.text "Print Mode: #{@print_mode.capitalize}",
+                 size: 12, align: :center, color: "666666"
+      end
+
+      pdf.move_down 10
       pdf.stroke_horizontal_rule
       pdf.move_down 20
     end

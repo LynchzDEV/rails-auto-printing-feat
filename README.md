@@ -5,7 +5,8 @@ A Rails 8 application that demonstrates dynamic multi-page PDF generation with c
 ## 🚀 Features
 
 - **Dynamic PDF Generation**: Create multi-page PDFs with customer data and item details
-- **Multiple Copies**: Generate multiple copies of the same document
+- **Flexible Copy Options**: Generate 1-50 copies with multiple print modes
+- **Print Modes**: Single PDF with all copies OR separate PDF files (as ZIP)
 - **Item Detail Pages**: Each item gets its own detailed page with descriptions
 - **Summary Reports**: Optional summary pages with totals and statistics
 - **Responsive Web Interface**: Clean, modern form interface for data input
@@ -101,7 +102,8 @@ demo-print/
    - Price
    - Optional description
 4. **Configure Options**:
-   - Number of copies (1-5)
+   - Number of copies (1-50)
+   - Print mode (single PDF or separate PDFs)
    - Include summary page (checkbox)
 5. **Generate PDF**: Click "Generate PDF" or "Generate & Auto-Print"
 
@@ -113,6 +115,7 @@ Generated PDFs contain:
    - Customer information
    - Items overview table
    - Grand total
+   - Copy information and print mode
 
 2. **Item Detail Pages** (per item, per copy):
    - Detailed item information
@@ -124,6 +127,11 @@ Generated PDFs contain:
    - Value distribution
    - Report metadata
 
+### Print Modes
+
+- **Single PDF Mode**: All copies are included in one PDF file (default)
+- **Separate PDF Mode**: Each copy is generated as a separate PDF file, delivered as a ZIP archive
+
 ### API Endpoints
 
 - `GET /` - Main form interface
@@ -134,7 +142,8 @@ Generated PDFs contain:
     - `items[][quantity]`: Item quantities
     - `items[][price]`: Item prices
     - `items[][description]`: Item descriptions
-    - `copies`: Number of copies (1-5)
+    - `copies`: Number of copies (1-50)
+    - `print_mode`: Print mode ('single' or 'separate')
     - `include_summary`: Include summary page (0/1)
 
 ## 🧰 Key Dependencies
@@ -147,6 +156,7 @@ Generated PDFs contain:
 ### PDF Generation
 - **Prawn**: PDF generation library
 - **Prawn-table**: Table formatting for PDFs
+- **RubyZip**: ZIP file creation for separate PDF mode
 
 ### Frontend
 - **Turbo Rails**: SPA-like experience
@@ -261,6 +271,16 @@ To extend functionality:
 1. **New PDF sections**: Add methods to `PrintController`
 2. **Form fields**: Update `index.html.erb` and controller params
 3. **Styling**: Modify the embedded CSS in the view template
+4. **Print modes**: Extend the `generate_separate_pdfs` method for new output formats
+
+### Print Feature Details
+
+The enhanced printing system supports:
+
+- **Flexible copy counts**: 1-50 copies with input validation
+- **Multiple output modes**: Single PDF or ZIP of separate PDFs
+- **Performance optimization**: Separate PDF generation for large copy counts
+- **User warnings**: Alerts for large separate PDF generations
 
 ## 🐛 Troubleshooting
 
