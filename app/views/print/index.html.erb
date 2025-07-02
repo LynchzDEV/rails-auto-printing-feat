@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>PDF Print Demo</title>
+  <title>Multi-Page PDF Print Demo</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
@@ -9,7 +9,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 20px;
       background-color: #f5f5f5;
@@ -17,83 +17,226 @@
 
     .container {
       background: white;
-      padding: 40px;
+      padding: 30px;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      text-align: center;
     }
 
-    .print-button {
-      background-color: #007bff;
-      color: white;
-      padding: 15px 30px;
+    .form-section {
+      margin-bottom: 30px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #fafafa;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .item-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+      margin-bottom: 10px;
+      padding: 15px;
+      background: white;
+      border-radius: 5px;
+      border: 1px solid #eee;
+    }
+
+    .btn {
+      padding: 10px 20px;
       border: none;
       border-radius: 5px;
-      font-size: 16px;
       cursor: pointer;
-      text-decoration: none;
-      display: inline-block;
-      margin: 20px 0;
+      font-size: 14px;
       transition: background-color 0.3s;
     }
 
-    .print-button:hover {
-      background-color: #0056b3;
+    .btn-primary { background-color: #007bff; color: white; }
+    .btn-primary:hover { background-color: #0056b3; }
+
+    .btn-success { background-color: #28a745; color: white; }
+    .btn-success:hover { background-color: #1e7e34; }
+
+    .btn-secondary { background-color: #6c757d; color: white; }
+    .btn-secondary:hover { background-color: #545b62; }
+
+    .btn-danger { background-color: #dc3545; color: white; }
+    .btn-danger:hover { background-color: #c82333; }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
     }
 
-    .info {
-      background-color: #e7f3ff;
-      padding: 20px;
-      border-radius: 5px;
-      margin: 20px 0;
-      border-left: 4px solid #007bff;
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 10px;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>Rails PDF Print Demo</h1>
-    <p>Click the button below to generate and print a PDF with static content.</p>
+    <h1>Multi-Page PDF Generator</h1>
+    <p>Fill out the form below to generate a multi-page PDF with dynamic content.</p>
 
-    <div class="info">
-      <h3>📄 What will be printed:</h3>
-      <ul style="text-align: left; display: inline-block;">
-        <li>Document title and current date</li>
-        <li>Sample text content</li>
-        <li>Simple data table</li>
-        <li>Professional formatting</li>
+    <%= form_with url: print_generate_pdf_path(format: :pdf), method: :get, local: true, target: "_blank" do |f| %>
+
+      <div class="form-section">
+        <h3>📋 Customer Information</h3>
+
+        <div class="form-group">
+          <%= f.label :customer_name, "Customer Name:" %>
+          <%= f.text_field :customer_name, placeholder: "Enter customer name", value: "John Doe" %>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3>🛍️ Items</h3>
+        <div id="items-container">
+        </div>
+
+        <button type="button" onclick="addItemRow()" class="btn btn-secondary">
+          + Add Item
+        </button>
+      </div>
+
+      <div class="form-section">
+        <h3>⚙️ Print Options</h3>
+
+        <div class="form-group">
+          <%= f.label :copies, "Number of Copies:" %>
+          <%= f.select :copies, options_for_select([[1,1],[2,2],[3,3],[4,4],[5,5]], 2), {}, { class: "form-control" } %>
+        </div>
+
+        <div class="checkbox-group">
+          <%= f.check_box :include_summary, { checked: true }, "1", "0" %>
+          <%= f.label :include_summary, "Include summary page" %>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 30px;">
+        <%= f.submit "Generate PDF", class: "btn btn-primary", style: "margin-right: 10px;" %>
+
+        <button type="button" onclick="generateAndPrint()" class="btn btn-success">
+          Generate & Auto-Print
+        </button>
+      </div>
+
+    <% end %>
+
+    <div class="form-section" style="margin-top: 30px;">
+      <h3>📄 What will be generated:</h3>
+      <ul>
+        <li><strong>Main Page:</strong> Customer info and items overview</li>
+        <li><strong>Detail Pages:</strong> One page per item with full details</li>
+        <li><strong>Summary Page:</strong> Statistics and totals (if enabled)</li>
+        <li><strong>Multiple Copies:</strong> All pages repeated for each copy</li>
       </ul>
     </div>
+  </div>
 
-    <%= link_to "Generate & Print PDF",
-                print_generate_pdf_path(format: :pdf),
-                class: "print-button",
-                target: "_blank",
-                onclick: "setTimeout(function(){ window.print(); }, 1000);" %>
+  <script>
+    let itemCounter = 0;
 
-    <div style="margin-top: 30px; font-size: 14px; color: #666;">
-      <p><strong>How it works:</strong></p>
-      <p>1. Button triggers Rails controller action</p>
-      <p>2. Controller generates PDF using Prawn gem</p>
-      <p>3. PDF opens in new tab and auto-prints</p>
-    </div>
+    function addItemRow() {
+      itemCounter++;
+      const container = document.getElementById('items-container');
 
-    <script>
-      function printPDF() {
-        const printWindow = window.open('<%= print_generate_pdf_path(format: :pdf) %>', '_blank');
+      const itemRow = document.createElement('div');
+      itemRow.className = 'item-row';
+      itemRow.id = `item-${itemCounter}`;
 
+      itemRow.innerHTML = `
+        <div>
+          <label>Item Name:</label>
+          <input type="text" name="items[][name]" placeholder="Product name" required>
+        </div>
+        <div>
+          <label>Quantity:</label>
+          <input type="number" name="items[][quantity]" min="1" value="1" required>
+        </div>
+        <div>
+          <label>Price ($):</label>
+          <input type="number" name="items[][price]" step="0.01" min="0" value="0.00" required>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button type="button" onclick="removeItem(${itemCounter})" class="btn btn-danger">Remove</button>
+        </div>
+        <div style="grid-column: 1 / -1;">
+          <label>Description (optional):</label>
+          <textarea name="items[][description]" rows="2" placeholder="Additional item details..."></textarea>
+        </div>
+      `;
+
+      container.appendChild(itemRow);
+    }
+
+    function removeItem(itemId) {
+      const item = document.getElementById(`item-${itemId}`);
+      if (item) {
+        item.remove();
+      }
+    }
+
+    function generateAndPrint() {
+      const form = document.querySelector('form');
+      const formData = new FormData(form);
+      const queryString = new URLSearchParams(formData).toString();
+
+      const printWindow = window.open(
+        `${form.action}?${queryString}`,
+        '_blank'
+      );
+
+      if (printWindow) {
         printWindow.addEventListener('load', function() {
           setTimeout(function() {
             printWindow.print();
-          }, 500);
+          }, 1000);
         });
       }
-    </script>
+    }
 
-    <button onclick="printPDF()" class="print-button" style="background-color: #28a745;">
-      Auto-Print PDF
-    </button>
-  </div>
+    document.addEventListener('DOMContentLoaded', function() {
+      addItemRow();
+      addItemRow();
+
+      setTimeout(() => {
+        const inputs = document.querySelectorAll('input[name="items[][name]"]');
+        if (inputs[0]) inputs[0].value = 'Premium Widget';
+        if (inputs[1]) inputs[1].value = 'Standard Component';
+
+        const quantities = document.querySelectorAll('input[name="items[][quantity]"]');
+        if (quantities[0]) quantities[0].value = '2';
+        if (quantities[1]) quantities[1].value = '5';
+
+        const prices = document.querySelectorAll('input[name="items[][price]"]');
+        if (prices[0]) prices[0].value = '25.99';
+        if (prices[1]) prices[1].value = '12.50';
+      }, 100);
+    });
+  </script>
 </body>
 </html>
