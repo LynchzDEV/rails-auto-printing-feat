@@ -145,7 +145,10 @@
 
 <body>
   <div class="container">
-    <h1>Multi-Page PDF Generator</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h1>Multi-Page PDF Generator</h1>
+      <%= link_to "Generate Certificate", certificate_path, class: "btn btn-secondary" %>
+    </div>
     <p>Fill out the form below to generate a multi-page PDF with dynamic content.</p>
 
     <%= form_with url: print_generate_pdf_path(format: :pdf), method: :get, local: true, target: "_blank" do |f| %>

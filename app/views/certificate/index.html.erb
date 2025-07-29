@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Certificate Generator</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 20px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      background-color: #007bff;
+      transition: background-color 0.3s;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Certificate of Achievement</h1>
+    <p style="text-align:center; color:#666;">Enter the recipient's name to generate a signed certificate.</p>
+
+    <%= form_with url: "/certificate/generate", method: :post, local: true, target: "_blank", data: { turbo: false }, id: "certificateForm" do |f| %>
+      <div class="form-group">
+        <%= f.label :recipient_name, "Recipient's Name:" %>
+        <%= f.text_field :recipient_name, required: true, placeholder: "e.g., Jane Doe" %>
+      </div>
+
+      <div class="form-group">
+        <%= f.label :signature, "Your Signature:" %>
+        <canvas id="signatureCanvas" width="400" height="150" style="border:1px solid #ccc; background-color: #f9f9f9;"></canvas>
+        <input type="hidden" name="signature_data" id="signatureData">
+        <div style="margin-top: 10px;">
+          <button type="button" id="clearSignature" class="btn" style="background-color: #dc3545; width: auto; padding: 8px 15px;">Clear Signature</button>
+        </div>
+      </div>
+
+      <%= f.submit "Generate Certificate", class: "btn" %>
+    <% end %>
+
+  <script>
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+    const clearButton = document.getElementById('clearSignature');
+    const signatureDataInput = document.getElementById('signatureData');
+    let drawing = false;
+
+    function resizeCanvas() {
+      const containerWidth = canvas.parentElement.offsetWidth;
+      canvas.width = Math.min(containerWidth, 400);
+      canvas.height = 150;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = 'black';
+    }
+
+    function startDrawing(e) {
+      drawing = true;
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX || e.touches[0].clientX) - rect.left;
+      const y = (e.clientY || e.touches[0].clientY) - rect.top;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    }
+
+    function stopDrawing() {
+      drawing = false;
+    }
+
+    function draw(e) {
+      if (!drawing) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX || e.touches[0].clientX) - rect.left;
+      const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+      ctx.lineTo(x, y);
+      ctx.stroke();
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      signatureDataInput.value = '';
+    }
+
+    // Event Listeners for Mouse
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    canvas.addEventListener('mousemove', draw);
+
+    // Event Listeners for Touch
+    canvas.addEventListener('touchstart', startDrawing);
+    canvas.addEventListener('touchend', stopDrawing);
+    canvas.addEventListener('touchcancel', stopDrawing);
+    canvas.addEventListener('touchmove', draw);
+
+    clearButton.addEventListener('click', clearCanvas);
+
+    const certificateForm = document.getElementById('certificateForm');
+    certificateForm.addEventListener('submit', function() {
+      signatureDataInput.value = canvas.toDataURL('image/png');
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas(); // Initial resize
+  </script>
+  </div>
+</body>
+</html>
