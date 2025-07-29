@@ -107,6 +107,30 @@ demo-print/
    - Include summary page (checkbox)
 5. **Generate PDF**: Click "Generate PDF" or "Generate & Auto-Print"
 
+### Signature Feature
+
+The application includes a signature pad on the certificate generation page, allowing users to draw a signature that is then embedded into the generated PDF.
+
+#### How it Works
+
+1.  **Frontend Capture (`app/views/certificate/index.html.erb`)**:
+    -   A `<canvas>` element acts as the signature pad.
+    -   JavaScript captures drawing strokes on the canvas.
+    -   Before form submission, the canvas content is converted into a PNG data URL (`canvas.toDataURL('image/png')`).
+    -   This data URL is then assigned to a hidden input field (`signature_data`) within the form.
+
+2.  **Backend Processing (`app/controllers/certificate_controller.rb`)**:
+    -   The `signature_data` (a base64-encoded PNG image) is received as a parameter.
+    -   The base64 prefix (`data:image/png;base64,`) is stripped, and the remaining string is base64-decoded.
+    -   The decoded image data is then embedded into the PDF using Prawn's `pdf.image` method at a predefined position.
+
+#### Cryptographic Signature
+
+In addition to the drawn signature, the certificate also includes a cryptographic signature generated using RSA keys. This signature is based on the recipient's name and is embedded as text in the PDF.
+
+-   **Key Generation**: If `config/private_key.pem` and `config/public_key.pem` do not exist, they will be automatically generated when a certificate is first created.
+-   **Regenerating Keys**: To regenerate these keys, simply delete the existing `.pem` files from the `config/` directory. The application will create new ones on the next certificate generation.
+
 ### PDF Structure
 
 Generated PDFs contain:
